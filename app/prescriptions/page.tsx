@@ -1,18 +1,32 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAuthStore } from '@/lib/store';
-import { Header } from '@/components/layout/header';
-import { Sidebar } from '@/components/layout/sidebar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  Pill, 
-  Search, 
+import { useState, useEffect } from "react";
+import { useAuthStore } from "@/lib/store";
+import { Header } from "@/components/layout/header";
+import { Sidebar } from "@/components/layout/sidebar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Pill,
+  Search,
   Filter,
   Plus,
   Clock,
@@ -23,23 +37,34 @@ import {
   User,
   Building,
   Eye,
-  RefreshCw
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { Prescription, PrescriptionStatus } from '@/types';
+  RefreshCw,
+  X,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Prescription, PrescriptionStatus } from "@/types";
 
 export default function PrescriptionsPage() {
   const { user, isAuthenticated } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<PrescriptionStatus | 'all'>('all');
-  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<
+    PrescriptionStatus | "all"
+  >("all");
+  const [selectedPrescription, setSelectedPrescription] =
+    useState<Prescription | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [requestForm, setRequestForm] = useState({
+    medication: "",
+    reason: "",
+    notes: "",
+    preferredPharmacy: "",
+  });
   const router = useRouter();
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
-      router.push('/');
+      router.push("/");
       return;
     }
   }, [isAuthenticated, user, router]);
@@ -51,119 +76,119 @@ export default function PrescriptionsPage() {
   // Mock prescriptions data
   const mockPrescriptions: Prescription[] = [
     {
-      id: 'rx_1',
-      patientId: 'patient_1',
-      doctorId: 'doctor_1',
-      pharmacyId: 'pharmacy_1',
+      id: "rx_1",
+      patientId: "patient_1",
+      doctorId: "doctor_1",
+      pharmacyId: "pharmacy_1",
       medication: {
-        id: 'med_1',
-        name: 'Amoxicillin',
-        genericName: 'Amoxicillin',
-        brandName: 'Amoxil',
-        ndcNumber: '0093-4155-73',
-        strength: '500mg',
-        form: 'capsule',
-        routeOfAdministration: 'Oral',
-        contraindications: ['Penicillin allergy'],
-        sideEffects: ['Nausea', 'Diarrhea', 'Rash'],
-        warnings: ['Take with food']
+        id: "med_1",
+        name: "Amoxicillin",
+        genericName: "Amoxicillin",
+        brandName: "Amoxil",
+        ndcNumber: "0093-4155-73",
+        strength: "500mg",
+        form: "capsule",
+        routeOfAdministration: "Oral",
+        contraindications: ["Penicillin allergy"],
+        sideEffects: ["Nausea", "Diarrhea", "Rash"],
+        warnings: ["Take with food"],
       },
       dosage: {
         amount: 1,
-        unit: 'capsule',
-        frequency: 'Three times daily',
-        duration: '7 days',
-        route: 'Oral'
+        unit: "capsule",
+        frequency: "Three times daily",
+        duration: "7 days",
+        route: "Oral",
       },
       quantity: 21,
       refills: 0,
       refillsRemaining: 0,
-      status: 'active',
+      status: "active",
       prescribedDate: new Date(Date.now() - 86400000), // Yesterday
       expirationDate: new Date(Date.now() + 31536000000), // 1 year from now
-      instructions: 'Take one capsule three times daily with food for 7 days',
-      notes: 'For bacterial infection treatment',
-      interactions: []
+      instructions: "Take one capsule three times daily with food for 7 days",
+      notes: "For bacterial infection treatment",
+      interactions: [],
     },
     {
-      id: 'rx_2',
-      patientId: 'patient_1',
-      doctorId: 'doctor_2',
-      pharmacyId: 'pharmacy_1',
+      id: "rx_2",
+      patientId: "patient_1",
+      doctorId: "doctor_2",
+      pharmacyId: "pharmacy_1",
       medication: {
-        id: 'med_2',
-        name: 'Lisinopril',
-        genericName: 'Lisinopril',
-        brandName: 'Prinivil',
-        ndcNumber: '0071-0222-23',
-        strength: '10mg',
-        form: 'tablet',
-        routeOfAdministration: 'Oral',
-        contraindications: ['Pregnancy', 'Angioedema history'],
-        sideEffects: ['Dry cough', 'Dizziness', 'Hyperkalemia'],
-        warnings: ['Monitor blood pressure regularly']
+        id: "med_2",
+        name: "Lisinopril",
+        genericName: "Lisinopril",
+        brandName: "Prinivil",
+        ndcNumber: "0071-0222-23",
+        strength: "10mg",
+        form: "tablet",
+        routeOfAdministration: "Oral",
+        contraindications: ["Pregnancy", "Angioedema history"],
+        sideEffects: ["Dry cough", "Dizziness", "Hyperkalemia"],
+        warnings: ["Monitor blood pressure regularly"],
       },
       dosage: {
         amount: 1,
-        unit: 'tablet',
-        frequency: 'Once daily',
-        duration: 'Ongoing',
-        route: 'Oral'
+        unit: "tablet",
+        frequency: "Once daily",
+        duration: "Ongoing",
+        route: "Oral",
       },
       quantity: 30,
       refills: 5,
       refillsRemaining: 5,
-      status: 'active',
+      status: "active",
       prescribedDate: new Date(Date.now() - 2592000000), // 30 days ago
       expirationDate: new Date(Date.now() + 31536000000), // 1 year from now
-      instructions: 'Take one tablet once daily in the morning',
-      notes: 'For blood pressure management',
-      interactions: []
+      instructions: "Take one tablet once daily in the morning",
+      notes: "For blood pressure management",
+      interactions: [],
     },
     {
-      id: 'rx_3',
-      patientId: 'patient_1',
-      doctorId: 'doctor_1',
-      pharmacyId: 'pharmacy_1',
+      id: "rx_3",
+      patientId: "patient_1",
+      doctorId: "doctor_1",
+      pharmacyId: "pharmacy_1",
       medication: {
-        id: 'med_3',
-        name: 'Ibuprofen',
-        genericName: 'Ibuprofen',
-        brandName: 'Advil',
-        ndcNumber: '0573-0164-40',
-        strength: '200mg',
-        form: 'tablet',
-        routeOfAdministration: 'Oral',
-        contraindications: ['GI bleeding', 'Kidney disease'],
-        sideEffects: ['Stomach upset', 'Heartburn', 'Dizziness'],
-        warnings: ['Take with food or milk']
+        id: "med_3",
+        name: "Ibuprofen",
+        genericName: "Ibuprofen",
+        brandName: "Advil",
+        ndcNumber: "0573-0164-40",
+        strength: "200mg",
+        form: "tablet",
+        routeOfAdministration: "Oral",
+        contraindications: ["GI bleeding", "Kidney disease"],
+        sideEffects: ["Stomach upset", "Heartburn", "Dizziness"],
+        warnings: ["Take with food or milk"],
       },
       dosage: {
         amount: 1,
-        unit: 'tablet',
-        frequency: 'As needed',
-        duration: '30 days',
-        route: 'Oral'
+        unit: "tablet",
+        frequency: "As needed",
+        duration: "30 days",
+        route: "Oral",
       },
       quantity: 60,
       refills: 2,
       refillsRemaining: 0,
-      status: 'completed',
+      status: "completed",
       prescribedDate: new Date(Date.now() - 5184000000), // 60 days ago
       expirationDate: new Date(Date.now() - 2592000000), // 30 days ago
-      instructions: 'Take one tablet as needed for pain, maximum 3 times daily',
-      notes: 'For pain management',
-      interactions: []
-    }
+      instructions: "Take one tablet as needed for pain, maximum 3 times daily",
+      notes: "For pain management",
+      interactions: [],
+    },
   ];
 
   const getStatusIcon = (status: PrescriptionStatus) => {
     switch (status) {
-      case 'completed':
+      case "completed":
         return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'cancelled':
+      case "cancelled":
         return <XCircle className="w-4 h-4 text-red-600" />;
-      case 'expired':
+      case "expired":
         return <AlertTriangle className="w-4 h-4 text-orange-600" />;
       default:
         return <Clock className="w-4 h-4 text-blue-600" />;
@@ -172,59 +197,94 @@ export default function PrescriptionsPage() {
 
   const getStatusColor = (status: PrescriptionStatus) => {
     switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800 hover:bg-green-100';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 hover:bg-red-100';
-      case 'expired':
-        return 'bg-orange-100 text-orange-800 hover:bg-orange-100';
+      case "completed":
+        return "bg-green-100 text-green-800 hover:bg-green-100";
+      case "cancelled":
+        return "bg-red-100 text-red-800 hover:bg-red-100";
+      case "expired":
+        return "bg-orange-100 text-orange-800 hover:bg-orange-100";
       default:
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
+        return "bg-blue-100 text-blue-800 hover:bg-blue-100";
     }
   };
 
   const handleRefillRequest = (prescriptionId: string) => {
-    console.log('Requesting refill for prescription:', prescriptionId);
-    alert('Refill request submitted successfully! You will be notified when it\'s ready for pickup.');
+    console.log("Requesting refill for prescription:", prescriptionId);
+    alert(
+      "Refill request submitted successfully! You will be notified when it's ready for pickup."
+    );
   };
 
   const handleReorder = (prescriptionId: string) => {
-    console.log('Reordering prescription:', prescriptionId);
-    alert('Reorder request submitted! Please consult with your doctor for a new prescription.');
+    console.log("Reordering prescription:", prescriptionId);
+    alert(
+      "Reorder request submitted! Please consult with your doctor for a new prescription."
+    );
   };
 
   const handleViewDetails = (prescription: Prescription) => {
-    console.log('Viewing prescription details:', prescription.id);
+    console.log("Viewing prescription details:", prescription.id);
     setSelectedPrescription(prescription);
-    setIsDialogOpen(true);
-  };
-
-  const handleBookAppointment = () => {
-    console.log('Booking appointment');
-    router.push('/appointments');
+    setIsDetailsDialogOpen(true);
   };
 
   const handleRequestPrescription = () => {
-    console.log('Requesting prescription');
-    if (user.role === 'patient') {
-      router.push('/appointments');
-    } else {
-      alert('Prescription creation form would open here');
-    }
+    console.log("Opening prescription request dialog");
+    setIsRequestDialogOpen(true);
+  };
+  const handleNewPrescription = () => {
+    router.push("/prescriptions/create");
+    console.log("Navigating to new prescription creation page");
+    setIsRequestDialogOpen(false);
   };
 
-  const filteredPrescriptions = mockPrescriptions.filter(prescription => {
-    const matchesSearch = prescription.medication.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         prescription.medication.genericName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         prescription.instructions.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = selectedStatus === 'all' || prescription.status === selectedStatus;
+  const handleRequestSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Submitting prescription request:", requestForm);
+
+    // Here you would typically send the data to your API
+    alert(
+      "Prescription request submitted successfully! Your doctor will review and respond shortly."
+    );
+
+    // Reset form and close dialog
+    setRequestForm({
+      medication: "",
+      reason: "",
+      notes: "",
+      preferredPharmacy: "",
+    });
+    setIsRequestDialogOpen(false);
+  };
+
+  const filteredPrescriptions = mockPrescriptions.filter((prescription) => {
+    const matchesSearch =
+      prescription.medication.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      prescription.medication.genericName
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      prescription.instructions
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      selectedStatus === "all" || prescription.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
 
-  const activePrescriptions = filteredPrescriptions.filter(rx => rx.status === 'active');
-  const completedPrescriptions = filteredPrescriptions.filter(rx => rx.status === 'completed' || rx.status === 'expired');
+  const activePrescriptions = filteredPrescriptions.filter(
+    (rx) => rx.status === "active"
+  );
+  const completedPrescriptions = filteredPrescriptions.filter(
+    (rx) => rx.status === "completed" || rx.status === "expired"
+  );
 
-  const PrescriptionCard = ({ prescription }: { prescription: Prescription }) => (
+  const PrescriptionCard = ({
+    prescription,
+  }: {
+    prescription: Prescription;
+  }) => (
     <Card className="hover:shadow-md transition-shadow duration-200">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
@@ -232,38 +292,55 @@ export default function PrescriptionsPage() {
             <div className="flex items-center space-x-2 mb-2">
               <Pill className="w-5 h-5 text-blue-600" />
               <h3 className="font-semibold text-gray-900">
-                {prescription.medication.name} {prescription.medication.strength}
+                {prescription.medication.name}{" "}
+                {prescription.medication.strength}
               </h3>
               <Badge className={getStatusColor(prescription.status)}>
                 {getStatusIcon(prescription.status)}
-                <span className="ml-1">{prescription.status.charAt(0).toUpperCase() + prescription.status.slice(1)}</span>
+                <span className="ml-1">
+                  {prescription.status.charAt(0).toUpperCase() +
+                    prescription.status.slice(1)}
+                </span>
               </Badge>
             </div>
-            
+
             <p className="text-sm text-gray-600 mb-3">
-              {prescription.medication.genericName} • {prescription.medication.form}
+              {prescription.medication.genericName} •{" "}
+              {prescription.medication.form}
             </p>
-            
+
             <div className="space-y-2 text-sm text-gray-700">
-              <p><strong>Instructions:</strong> {prescription.instructions}</p>
-              <p><strong>Quantity:</strong> {prescription.quantity} {prescription.dosage.unit}s</p>
+              <p>
+                <strong>Instructions:</strong> {prescription.instructions}
+              </p>
+              <p>
+                <strong>Quantity:</strong> {prescription.quantity}{" "}
+                {prescription.dosage.unit}s
+              </p>
               {prescription.refillsRemaining > 0 && (
-                <p><strong>Refills Remaining:</strong> {prescription.refillsRemaining}</p>
+                <p>
+                  <strong>Refills Remaining:</strong>{" "}
+                  {prescription.refillsRemaining}
+                </p>
               )}
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-sm text-gray-500">
               <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4" />
-                <span>Prescribed: {prescription.prescribedDate.toLocaleDateString()}</span>
+                <span>
+                  Prescribed: {prescription.prescribedDate.toLocaleDateString()}
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <Clock className="w-4 h-4" />
-                <span>Expires: {prescription.expirationDate.toLocaleDateString()}</span>
+                <span>
+                  Expires: {prescription.expirationDate.toLocaleDateString()}
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <User className="w-4 h-4" />
-                <span>Dr. {user.role === 'patient' ? 'Smith' : 'Johnson'}</span>
+                <span>Dr. {user.role === "patient" ? "Smith" : "Johnson"}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Building className="w-4 h-4" />
@@ -271,29 +348,30 @@ export default function PrescriptionsPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex flex-col space-y-2 ml-4">
-            {prescription.status === 'active' && prescription.refillsRemaining > 0 && (
-              <Button 
-                size="sm" 
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => handleRefillRequest(prescription.id)}
-              >
-                <RefreshCw className="w-4 h-4 mr-1" />
-                Request Refill
-              </Button>
-            )}
-            <Button 
-              variant="outline" 
+            {prescription.status === "active" &&
+              prescription.refillsRemaining > 0 && (
+                <Button
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => handleRefillRequest(prescription.id)}
+                >
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  Request Refill
+                </Button>
+              )}
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => handleViewDetails(prescription)}
             >
               <Eye className="w-4 h-4 mr-1" />
               View Details
             </Button>
-            {prescription.status === 'completed' && (
-              <Button 
-                variant="outline" 
+            {prescription.status === "completed" && (
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => handleReorder(prescription.id)}
               >
@@ -307,34 +385,151 @@ export default function PrescriptionsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
-      <div className="lg:ml-64">
+
+      <div className="w-full">
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        
+
         <main className="p-6 space-y-6">
           {/* Page Header */}
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-inter font-bold text-gray-900">
-                {user.role === 'patient' ? 'My Prescriptions' : 
-                 user.role === 'doctor' ? 'Patient Prescriptions' : 
-                 'Prescription Management'}
+                {user.role === "patient"
+                  ? "My Prescriptions"
+                  : user.role === "doctor"
+                  ? "Patient Prescriptions"
+                  : "Prescription Management"}
               </h1>
               <p className="text-gray-600 mt-1">
-                {user.role === 'patient' 
-                  ? 'View and manage your current and past prescriptions'
-                  : user.role === 'doctor'
-                  ? 'Create and manage patient prescriptions'
-                  : 'Process and fulfill prescription orders'
-                }
+                {user.role === "patient"
+                  ? "View and manage your current and past prescriptions"
+                  : user.role === "doctor"
+                  ? "Create and manage patient prescriptions"
+                  : "Process and fulfill prescription orders"}
               </p>
             </div>
-            <Button className="flex items-center space-x-2" onClick={handleRequestPrescription}>
-              <Plus className="w-4 h-4" />
-              <span>{user.role === 'patient' ? 'Request Prescription' : 'New Prescription'}</span>
-            </Button>
+
+            {/* Request Prescription Dialog */}
+            {user.role === "patient" ? (
+              <Dialog
+                open={isRequestDialogOpen}
+                onOpenChange={setIsRequestDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    onClick={handleRequestPrescription}
+                    className="flex items-center space-x-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Request Prescription</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Request New Prescription</DialogTitle>
+                    <DialogDescription>
+                      Submit a request for a new prescription to your doctor
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <form onSubmit={handleRequestSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="medication">Medication Name</Label>
+                      <Input
+                        id="medication"
+                        value={requestForm.medication}
+                        onChange={(e) =>
+                          setRequestForm((prev) => ({
+                            ...prev,
+                            medication: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g., Lisinopril, Amoxicillin"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="reason">Reason for Request</Label>
+                      <Input
+                        id="reason"
+                        value={requestForm.reason}
+                        onChange={(e) =>
+                          setRequestForm((prev) => ({
+                            ...prev,
+                            reason: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g., Blood pressure management, Infection"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="pharmacy">Preferred Pharmacy</Label>
+                      <select
+                        id="pharmacy"
+                        value={requestForm.preferredPharmacy}
+                        onChange={(e) =>
+                          setRequestForm((prev) => ({
+                            ...prev,
+                            preferredPharmacy: e.target.value,
+                          }))
+                        }
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">Select a pharmacy</option>
+                        <option value="main">Main Hospital Pharmacy</option>
+                        <option value="cvs">CVS Pharmacy</option>
+                        <option value="walgreens">Walgreens</option>
+                        <option value="rite-aid">Rite Aid</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">Additional Notes (Optional)</Label>
+                      <textarea
+                        id="notes"
+                        value={requestForm.notes}
+                        onChange={(e) =>
+                          setRequestForm((prev) => ({
+                            ...prev,
+                            notes: e.target.value,
+                          }))
+                        }
+                        placeholder="Any additional information for your doctor..."
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="flex space-x-3 pt-4">
+                      <Button type="submit" className="flex-1">
+                        Submit Request
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsRequestDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            ) : (
+              <Button
+                className="flex items-center space-x-2"
+                onClick={() => router.push("/prescriptions/create")}
+              >
+                <Plus className="w-4 h-4" />
+                <span>New Prescription</span>
+              </Button>
+            )}
           </div>
 
           {/* Search and Filters */}
@@ -354,7 +549,11 @@ export default function PrescriptionsPage() {
                   <Filter className="w-4 h-4 text-gray-400" />
                   <select
                     value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value as PrescriptionStatus | 'all')}
+                    onChange={(e) =>
+                      setSelectedStatus(
+                        e.target.value as PrescriptionStatus | "all"
+                      )
+                    }
                     className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="all">All Status</option>
@@ -371,14 +570,21 @@ export default function PrescriptionsPage() {
           {/* Prescriptions Tabs */}
           <Tabs defaultValue="active" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 max-w-md">
-              <TabsTrigger value="active">Active ({activePrescriptions.length})</TabsTrigger>
-              <TabsTrigger value="history">History ({completedPrescriptions.length})</TabsTrigger>
+              <TabsTrigger value="active">
+                Active ({activePrescriptions.length})
+              </TabsTrigger>
+              <TabsTrigger value="history">
+                History ({completedPrescriptions.length})
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="active" className="space-y-4">
               {activePrescriptions.length > 0 ? (
                 activePrescriptions.map((prescription) => (
-                  <PrescriptionCard key={prescription.id} prescription={prescription} />
+                  <PrescriptionCard
+                    key={prescription.id}
+                    prescription={prescription}
+                  />
                 ))
               ) : (
                 <Card>
@@ -390,10 +596,10 @@ export default function PrescriptionsPage() {
                     <p className="text-gray-600 mb-4">
                       You don't have any active prescriptions at the moment.
                     </p>
-                    {user.role === 'patient' && (
-                      <Button onClick={handleBookAppointment}>
+                    {user.role === "patient" && (
+                      <Button onClick={handleRequestPrescription}>
                         <Plus className="w-4 h-4 mr-2" />
-                        Book Appointment
+                        Request Prescription
                       </Button>
                     )}
                   </CardContent>
@@ -404,7 +610,10 @@ export default function PrescriptionsPage() {
             <TabsContent value="history" className="space-y-4">
               {completedPrescriptions.length > 0 ? (
                 completedPrescriptions.map((prescription) => (
-                  <PrescriptionCard key={prescription.id} prescription={prescription} />
+                  <PrescriptionCard
+                    key={prescription.id}
+                    prescription={prescription}
+                  />
                 ))
               ) : (
                 <Card>
@@ -423,12 +632,25 @@ export default function PrescriptionsPage() {
           </Tabs>
 
           {/* Prescription Details Dialog */}
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog
+            open={isDetailsDialogOpen}
+            onOpenChange={setIsDetailsDialogOpen}
+          >
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Prescription Details</DialogTitle>
+                <DialogTitle className="flex items-center justify-between">
+                  <span>Prescription Details</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsDetailsDialogOpen(false)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </DialogTitle>
                 <DialogDescription>
-                  Complete information for {selectedPrescription?.medication.name}
+                  Complete information for{" "}
+                  {selectedPrescription?.medication.name}
                 </DialogDescription>
               </DialogHeader>
               {selectedPrescription && (
@@ -436,55 +658,99 @@ export default function PrescriptionsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <h3 className="font-semibold mb-2">Medication</h3>
-                      <p><strong>Name:</strong> {selectedPrescription.medication.name}</p>
-                      <p><strong>Generic:</strong> {selectedPrescription.medication.genericName}</p>
-                      <p><strong>Brand:</strong> {selectedPrescription.medication.brandName}</p>
-                      <p><strong>Strength:</strong> {selectedPrescription.medication.strength}</p>
-                      <p><strong>Form:</strong> {selectedPrescription.medication.form}</p>
+                      <p>
+                        <strong>Name:</strong>{" "}
+                        {selectedPrescription.medication.name}
+                      </p>
+                      <p>
+                        <strong>Generic:</strong>{" "}
+                        {selectedPrescription.medication.genericName}
+                      </p>
+                      <p>
+                        <strong>Brand:</strong>{" "}
+                        {selectedPrescription.medication.brandName}
+                      </p>
+                      <p>
+                        <strong>Strength:</strong>{" "}
+                        {selectedPrescription.medication.strength}
+                      </p>
+                      <p>
+                        <strong>Form:</strong>{" "}
+                        {selectedPrescription.medication.form}
+                      </p>
                     </div>
                     <div>
                       <h3 className="font-semibold mb-2">Dosage</h3>
-                      <p><strong>Amount:</strong> {selectedPrescription.dosage.amount} {selectedPrescription.dosage.unit}</p>
-                      <p><strong>Frequency:</strong> {selectedPrescription.dosage.frequency}</p>
-                      <p><strong>Duration:</strong> {selectedPrescription.dosage.duration}</p>
-                      <p><strong>Route:</strong> {selectedPrescription.dosage.route}</p>
+                      <p>
+                        <strong>Amount:</strong>{" "}
+                        {selectedPrescription.dosage.amount}{" "}
+                        {selectedPrescription.dosage.unit}
+                      </p>
+                      <p>
+                        <strong>Frequency:</strong>{" "}
+                        {selectedPrescription.dosage.frequency}
+                      </p>
+                      <p>
+                        <strong>Duration:</strong>{" "}
+                        {selectedPrescription.dosage.duration}
+                      </p>
+                      <p>
+                        <strong>Route:</strong>{" "}
+                        {selectedPrescription.dosage.route}
+                      </p>
                     </div>
                   </div>
-                  
+
                   <div>
                     <h3 className="font-semibold mb-2">Instructions</h3>
-                    <p className="text-gray-700">{selectedPrescription.instructions}</p>
+                    <p className="text-gray-700">
+                      {selectedPrescription.instructions}
+                    </p>
                     {selectedPrescription.notes && (
-                      <p className="text-gray-600 mt-2"><strong>Notes:</strong> {selectedPrescription.notes}</p>
+                      <p className="text-gray-600 mt-2">
+                        <strong>Notes:</strong> {selectedPrescription.notes}
+                      </p>
                     )}
                   </div>
-                  
+
                   <div>
-                    <h3 className="font-semibold mb-2">Warnings & Side Effects</h3>
+                    <h3 className="font-semibold mb-2">
+                      Warnings & Side Effects
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <p className="font-medium text-red-600">Contraindications:</p>
+                        <p className="font-medium text-red-600">
+                          Contraindications:
+                        </p>
                         <ul className="list-disc list-inside text-sm text-gray-700">
-                          {selectedPrescription.medication.contraindications.map((item, index) => (
-                            <li key={index}>{item}</li>
-                          ))}
+                          {selectedPrescription.medication.contraindications.map(
+                            (item, index) => (
+                              <li key={index}>{item}</li>
+                            )
+                          )}
                         </ul>
                       </div>
                       <div>
-                        <p className="font-medium text-orange-600">Side Effects:</p>
+                        <p className="font-medium text-orange-600">
+                          Side Effects:
+                        </p>
                         <ul className="list-disc list-inside text-sm text-gray-700">
-                          {selectedPrescription.medication.sideEffects.map((item, index) => (
-                            <li key={index}>{item}</li>
-                          ))}
+                          {selectedPrescription.medication.sideEffects.map(
+                            (item, index) => (
+                              <li key={index}>{item}</li>
+                            )
+                          )}
                         </ul>
                       </div>
                     </div>
                     <div className="mt-4">
                       <p className="font-medium text-blue-600">Warnings:</p>
                       <ul className="list-disc list-inside text-sm text-gray-700">
-                        {selectedPrescription.medication.warnings.map((item, index) => (
-                          <li key={index}>{item}</li>
-                        ))}
+                        {selectedPrescription.medication.warnings.map(
+                          (item, index) => (
+                            <li key={index}>{item}</li>
+                          )
+                        )}
                       </ul>
                     </div>
                   </div>

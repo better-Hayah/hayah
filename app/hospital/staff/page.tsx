@@ -348,10 +348,10 @@ export default function HospitalStaffPage() {
   const uniqueRoles = Array.from(new Set(mockStaff.map(staff => staff.role)));
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <div className="lg:ml-64">
+      <div className="w-full">
         <Header onMenuClick={() => setSidebarOpen(true)} />
         
         <main className="p-6 space-y-6">

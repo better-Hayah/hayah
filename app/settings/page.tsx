@@ -174,10 +174,10 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <div className="lg:ml-64">
+      <div className="w-full">
         <Header onMenuClick={() => setSidebarOpen(true)} />
         
         <main className="p-6 space-y-6">
