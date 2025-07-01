@@ -1,0 +1,342 @@
+classDiagram
+    %% Core User Management
+    class User {
+        +string id
+        +string email
+        +string passwordHash
+        +UserRole role
+        +UserProfile profile
+        +Permission[] permissions
+        +DateTime createdAt
+        +DateTime updatedAt
+        +bool isActive
+        +string tenantId
+        +login(email: string, password: string) AuthToken
+        +updateProfile(profile: UserProfile) void
+        +resetPassword(token: string, newPassword: string) void
+        +enableMFA() void
+    }
+
+    class UserProfile {
+        +string firstName
+        +string lastName
+        +string phone
+        +string avatar
+        +Address address
+        +Preferences preferences
+        +validateProfile() bool
+        +updateAvatar(file: File) string
+    }
+
+    class Permission {
+        +string id
+        +string resource
+        +string action
+        +string[] conditions
+        +DateTime expiresAt
+        +checkAccess(resource: string, action: string) bool
+    }
+
+    %% Patient Management
+    class Patient {
+        +string id
+        +string userId
+        +string medicalRecordNumber
+        +Demographics demographics
+        +InsuranceInfo[] insurance
+        +EmergencyContact[] emergencyContacts
+        +MedicalHistory medicalHistory
+        +Appointment[] appointments
+        +Prescription[] prescriptions
+        +registerPatient(userData: UserData) Patient
+        +updateInsurance(insurance: InsuranceInfo) void
+        +addEmergencyContact(contact: EmergencyContact) void
+        +getMedicalTimeline() MedicalEvent[]
+    }
+
+    class MedicalHistory {
+        +Allergy[] allergies
+        +Medication[] medications
+        +MedicalCondition[] conditions
+        +Procedure[] procedures
+        +LabResult[] labResults
+        +VitalSigns[] vitalSigns
+        +addCondition(condition: MedicalCondition) void
+        +updateAllergies(allergies: Allergy[]) void
+        +getConditionHistory(conditionId: string) MedicalCondition[]
+    }
+
+    %% Clinical Workflows
+    class Appointment {
+        +string id
+        +string patientId
+        +string doctorId
+        +AppointmentType type
+        +AppointmentStatus status
+        +DateTime scheduledTime
+        +int duration
+        +string notes
+        +ConsultationRecord consultation
+        +scheduleAppointment(patientId: string, doctorId: string, time: DateTime) Appointment
+        +reschedule(newTime: DateTime) void
+        +cancel(reason: string) void
+        +startConsultation() ConsultationRecord
+        +completeAppointment(notes: string) void
+    }
+
+    class ConsultationRecord {
+        +string id
+        +string appointmentId
+        +string chiefComplaint
+        +string assessment
+        +string treatmentPlan
+        +Prescription[] prescriptions
+        +FollowUp[] followUps
+        +string recordingUrl
+        +bool followUpRequired
+        +createRecord(appointmentId: string) ConsultationRecord
+        +addPrescription(prescription: Prescription) void
+        +scheduleFollowUp(followUp: FollowUp) void
+        +generateSummary() string
+    }
+
+    %% Doctor/Provider Management
+    class Doctor {
+        +string id
+        +string userId
+        +string licenseNumber
+        +Specialty[] specialties
+        +Schedule schedule
+        +Department department
+        +Credential[] credentials
+        +Patient[] patients
+        +updateSchedule(schedule: Schedule) void
+        +addSpecialty(specialty: Specialty) void
+        +getPatientList() Patient[]
+        +createPrescription(patientId: string, medication: Medication) Prescription
+    }
+
+    class Schedule {
+        +string id
+        +string doctorId
+        +TimeSlot[] availableSlots
+        +TimeSlot[] bookedSlots
+        +WorkingHours workingHours
+        +bool isActive
+        +addAvailability(startTime: DateTime, endTime: DateTime) void
+        +bookSlot(slotId: string, appointmentId: string) void
+        +getAvailableSlots(date: Date) TimeSlot[]
+        +blockTime(startTime: DateTime, endTime: DateTime, reason: string) void
+    }
+
+    %% Prescription & Pharmacy
+    class Prescription {
+        +string id
+        +string patientId
+        +string doctorId
+        +Medication medication
+        +Dosage dosage
+        +int quantity
+        +int refills
+        +PrescriptionStatus status
+        +string pharmacyId
+        +DateTime prescribedDate
+        +DateTime expirationDate
+        +createPrescription(patientId: string, medication: Medication) Prescription
+        +sendToPharmacy(pharmacyId: string) void
+        +checkInteractions() DrugInteraction[]
+        +authorize() void
+        +refill() Prescription
+    }
+
+    class Medication {
+        +string id
+        +string name
+        +string genericName
+        +string ndc
+        +string strength
+        +string form
+        +string[] contraindications
+        +DrugInteraction[] interactions
+        +validateDosage(dosage: Dosage, patient: Patient) bool
+        +checkAllergies(patient: Patient) bool
+        +getAlternatives() Medication[]
+    }
+
+    class Pharmacy {
+        +string id
+        +string name
+        +Address address
+        +string phone
+        +Inventory inventory
+        +Prescription[] prescriptions
+        +processPrescription(prescription: Prescription) void
+        +updateInventory(medication: Medication, quantity: int) void
+        +checkAvailability(medication: Medication) bool
+        +orderMedication(medication: Medication, quantity: int) void
+    }
+
+    %% Emergency Management
+    class EmergencyAlert {
+        +string id
+        +string patientId
+        +AlertType type
+        +AlertSeverity severity
+        +Location location
+        +DateTime timestamp
+        +AlertStatus status
+        +string[] respondersNotified
+        +EmergencyResponse response
+        +triggerAlert(patientId: string, location: Location) EmergencyAlert
+        +dispatchAmbulance(ambulanceId: string) void
+        +updateStatus(status: AlertStatus) void
+        +notifyHospital() void
+    }
+
+    class Ambulance {
+        +string id
+        +string vehicleNumber
+        +Crew[] crew
+        +Location currentLocation
+        +AmbulanceStatus status
+        +Equipment[] equipment
+        +EmergencyAlert currentAlert
+        +dispatch(alert: EmergencyAlert) void
+        +updateLocation(location: Location) void
+        +arriveAtScene() void
+        +transportToHospital(hospitalId: string) void
+    }
+
+    %% Hospital Administration
+    class Hospital {
+        +string id
+        +string name
+        +Address address
+        +Facility[] facilities
+        +Department[] departments
+        +Staff[] staff
+        +Bed[] beds
+        +Equipment[] equipment
+        +addDepartment(department: Department) void
+        +manageBeds() BedStatus[]
+        +getStaffSchedule() Schedule[]
+        +generateReports() Report[]
+    }
+
+    class Bed {
+        +string id
+        +string roomNumber
+        +BedType type
+        +BedStatus status
+        +string patientId
+        +Department department
+        +Equipment[] attachedEquipment
+        +assignPatient(patientId: string) void
+        +discharge() void
+        +clean() void
+        +maintenance() void
+    }
+
+    %% Financial Management
+    class Bill {
+        +string id
+        +string patientId
+        +BillItem[] items
+        +decimal totalAmount
+        +decimal paidAmount
+        +decimal balanceAmount
+        +BillStatus status
+        +InsuranceClaim[] claims
+        +Payment[] payments
+        +generateBill(patientId: string, services: Service[]) Bill
+        +addItem(item: BillItem) void
+        +processPayment(payment: Payment) void
+        +submitInsuranceClaim(insuranceId: string) InsuranceClaim
+    }
+
+    class Payment {
+        +string id
+        +string billId
+        +decimal amount
+        +PaymentMethod method
+        +PaymentStatus status
+        +DateTime transactionDate
+        +string transactionId
+        +processPayment(amount: decimal, method: PaymentMethod) Payment
+        +refund(amount: decimal) void
+        +getReceipt() Receipt
+    }
+
+    %% Telemedicine
+    class VideoConsultation {
+        +string id
+        +string appointmentId
+        +string sessionId
+        +Participant[] participants
+        +ConsultationStatus status
+        +DateTime startTime
+        +DateTime endTime
+        +string recordingUrl
+        +ChatMessage[] chatMessages
+        +startSession() string
+        +addParticipant(userId: string) void
+        +shareScreen() void
+        +sendMessage(message: string) void
+        +endSession() void
+        +saveRecording() string
+    }
+
+    %% Integration Services
+    class HL7Service {
+        +processMessage(message: HL7Message) void
+        +generateADT(patient: Patient) HL7Message
+        +generateORM(order: Order) HL7Message
+        +generateORU(result: LabResult) HL7Message
+        +validateMessage(message: HL7Message) bool
+        +transformToFHIR(hl7Message: HL7Message) FHIRResource
+    }
+
+    class FHIRService {
+        +createResource(resource: FHIRResource) string
+        +getResource(id: string, type: string) FHIRResource
+        +updateResource(id: string, resource: FHIRResource) void
+        +searchResources(criteria: SearchCriteria) FHIRResource[]
+        +validateResource(resource: FHIRResource) bool
+    }
+
+    %% Audit and Compliance
+    class AuditLog {
+        +string id
+        +string userId
+        +string action
+        +string resource
+        +DateTime timestamp
+        +string ipAddress
+        +string userAgent
+        +AuditDetails details
+        +logAccess(userId: string, resource: string) void
+        +logModification(userId: string, resource: string, changes: object) void
+        +generateReport(startDate: Date, endDate: Date) AuditReport
+    }
+
+    %% Relationships
+    User ||--|| UserProfile : has
+    User ||--o{ Permission : has
+    Patient ||--|| User : extends
+    Doctor ||--|| User : extends
+    Patient ||--|| MedicalHistory : has
+    Patient ||--o{ Appointment : schedules
+    Doctor ||--o{ Appointment : accepts
+    Appointment ||--o| ConsultationRecord : generates
+    Doctor ||--|| Schedule : has
+    Prescription }o--|| Patient : prescribed_to
+    Prescription }o--|| Doctor : prescribed_by
+    Prescription }o--|| Medication : contains
+    Pharmacy ||--o{ Prescription : processes
+    EmergencyAlert ||--o| Ambulance : dispatches
+    Hospital ||--o{ Department : contains
+    Hospital ||--o{ Bed : manages
+    Patient ||--o{ Bill : generates
+    Bill ||--o{ Payment : receives
+    Appointment ||--o| VideoConsultation : may_have
+    VideoConsultation ||--o{ Participant : includes

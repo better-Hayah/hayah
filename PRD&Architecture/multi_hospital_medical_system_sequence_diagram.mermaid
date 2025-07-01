@@ -1,0 +1,243 @@
+sequenceDiagram
+    participant P as Patient
+    participant PW as PatientWebApp
+    participant AG as APIGateway
+    participant AUTH as AuthService
+    participant PS as PatientService
+    participant AS as AppointmentService
+    participant DS as DoctorService
+    participant NS as NotificationService
+    participant VS as VideoService
+    participant PRES as PrescriptionService
+    participant PHAR as PharmacyService
+    participant ES as EmergencyService
+    participant AMB as AmbulanceService
+    participant BS as BillingService
+    participant AUDIT as AuditService
+    participant DB as Database
+    participant CACHE as RedisCache
+    participant QUEUE as MessageQueue
+
+    %% User Authentication Flow
+    Note over P, AUDIT: User Authentication & Registration
+    P->>PW: Open application
+    PW->>AG: GET /api/auth/session
+    AG->>AUTH: validateSession()
+    AUTH-->>AG: session invalid
+    AG-->>PW: 401 Unauthorized
+    PW->>AG: POST /api/auth/login {email, password}
+    AG->>AUTH: login(email, password)
+    AUTH->>DB: SELECT user WHERE email=?
+    DB-->>AUTH: user data
+    AUTH->>AUTH: validatePassword()
+    AUTH->>AUTH: generateMFAChallenge()
+    AUTH-->>AG: MFA challenge required
+    AG-->>PW: MFA challenge
+    P->>PW: Enter MFA code
+    PW->>AG: POST /api/auth/mfa {code}
+    AG->>AUTH: validateMFA(code)
+    AUTH->>AUTH: generateJWT()
+    AUTH->>CACHE: store session
+    AUTH->>AUDIT: logAccess(userId, 'login')
+    AUTH-->>AG: JWT token
+    AG-->>PW: authentication success
+
+    %% Patient Registration Flow
+    Note over P, AUDIT: Patient Registration
+    P->>PW: Click "Register as Patient"
+    PW->>AG: POST /api/patients/register {userData}
+    AG->>AUTH: validateToken()
+    AUTH-->>AG: token valid
+    AG->>PS: createPatient(userData)
+    PS->>PS: validatePatientData()
+    PS->>DB: INSERT INTO patients
+    PS->>DB: INSERT INTO medical_history
+    PS->>QUEUE: publish patientCreated event
+    PS->>AUDIT: logCreation(userId, 'patient')
+    PS-->>AG: patient created
+    AG-->>PW: registration success
+    QUEUE->>NS: consume patientCreated
+    NS->>NS: sendWelcomeEmail()
+
+    %% Appointment Scheduling Flow
+    Note over P, AUDIT: Appointment Scheduling
+    P->>PW: Search for doctors
+    PW->>AG: GET /api/doctors/search?specialty=cardiology
+    AG->>DS: searchDoctors(specialty)
+    DS->>CACHE: get cached results
+    CACHE-->>DS: cache miss
+    DS->>DB: SELECT doctors WHERE specialty=?
+    DS->>CACHE: cache results
+    DS-->>AG: doctor list
+    AG-->>PW: available doctors
+    
+    P->>PW: Select doctor and time
+    PW->>AG: GET /api/doctors/{id}/availability
+    AG->>DS: getDoctorAvailability(doctorId)
+    DS->>DB: SELECT schedule WHERE doctor_id=?
+    DS->>AS: getBookedSlots(doctorId)
+    AS->>DB: SELECT appointments WHERE doctor_id=?
+    AS-->>DS: booked slots
+    DS-->>AG: available slots
+    AG-->>PW: time slots
+    
+    P->>PW: Book appointment
+    PW->>AG: POST /api/appointments {doctorId, patientId, time}
+    AG->>AS: createAppointment()
+    AS->>AS: validateTimeSlot()
+    AS->>DB: BEGIN TRANSACTION
+    AS->>DB: INSERT INTO appointments
+    AS->>DS: updateDoctorSchedule()
+    DS->>DB: UPDATE doctor_schedule
+    AS->>DB: COMMIT TRANSACTION
+    AS->>QUEUE: publish appointmentScheduled
+    AS->>AUDIT: logCreation(userId, 'appointment')
+    AS-->>AG: appointment created
+    AG-->>PW: booking confirmation
+    
+    QUEUE->>NS: consume appointmentScheduled
+    NS->>NS: sendConfirmationEmail()
+    NS->>NS: scheduleReminders()
+
+    %% Video Consultation Flow
+    Note over P, AUDIT: Video Consultation
+    P->>PW: Join video consultation
+    PW->>AG: POST /api/video/join/{appointmentId}
+    AG->>AS: validateAppointment(appointmentId)
+    AS->>DB: SELECT appointment WHERE id=?
+    AS-->>AG: appointment valid
+    AG->>VS: createVideoSession(appointmentId)
+    VS->>VS: generateSessionToken()
+    VS->>DB: INSERT INTO video_sessions
+    VS->>CACHE: store session data
+    VS-->>AG: session token
+    AG-->>PW: video session details
+    
+    PW->>VS: Connect to WebRTC
+    VS->>VS: establishPeerConnection()
+    Note over VS: Doctor joins session
+    VS->>AS: startConsultation(appointmentId)
+    AS->>DB: UPDATE appointment SET status='in-progress'
+    AS->>AUDIT: logAccess(userId, 'consultation_start')
+    
+    Note over P, VS: Video call in progress
+    P->>VS: Send chat message
+    VS->>VS: broadcastMessage()
+    VS->>DB: INSERT INTO chat_messages
+    
+    Note over VS: Consultation ends
+    VS->>AS: endConsultation(appointmentId, notes)
+    AS->>DB: UPDATE appointment SET status='completed'
+    AS->>DB: INSERT INTO consultation_records
+    AS->>AUDIT: logModification(userId, 'consultation_end')
+    VS->>VS: saveRecording()
+    VS-->>PW: consultation ended
+
+    %% E-Prescription Flow
+    Note over P, AUDIT: E-Prescription
+    Note over DS: Doctor creates prescription during consultation
+    DS->>PRES: createPrescription(patientId, medication)
+    PRES->>PRES: checkDrugInteractions()
+    PRES->>PRES: validateDosage()
+    PRES->>DB: INSERT INTO prescriptions
+    PRES->>QUEUE: publish prescriptionCreated
+    PRES->>AUDIT: logCreation(doctorId, 'prescription')
+    PRES-->>DS: prescription created
+    
+    QUEUE->>PHAR: consume prescriptionCreated
+    PHAR->>PHAR: processPrescription()
+    PHAR->>DB: INSERT INTO pharmacy_queue
+    PHAR->>NS: notifyPatient()
+    NS->>P: SMS notification
+    
+    P->>PW: View prescriptions
+    PW->>AG: GET /api/prescriptions
+    AG->>PRES: getPatientPrescriptions(patientId)
+    PRES->>DB: SELECT prescriptions WHERE patient_id=?
+    PRES-->>AG: prescription list
+    AG-->>PW: prescriptions
+
+    %% Emergency Alert Flow
+    Note over P, AUDIT: Emergency Alert System
+    P->>PW: Press SOS button
+    PW->>AG: POST /api/emergency/alert {location}
+    AG->>ES: triggerEmergencyAlert(patientId, location)
+    ES->>DB: INSERT INTO emergency_alerts
+    ES->>QUEUE: publish emergencyAlert (high priority)
+    ES->>NS: notifyEmergencyContacts()
+    ES->>AMB: dispatchAmbulance(location)
+    ES->>AUDIT: logEmergency(patientId, 'sos_triggered')
+    ES-->>AG: alert created
+    AG-->>PW: emergency services notified
+    
+    QUEUE->>AMB: consume emergencyAlert
+    AMB->>AMB: findNearestAmbulance(location)
+    AMB->>DB: UPDATE ambulance SET status='dispatched'
+    AMB->>ES: updateAlertStatus('dispatched')
+    ES->>DB: UPDATE emergency_alerts
+    ES->>NS: notifyPatient('ambulance_dispatched')
+    
+    AMB->>AMB: updateLocation() [continuous]
+    AMB->>ES: locationUpdate()
+    ES->>CACHE: update location
+    ES->>PW: realtime location update
+    
+    AMB->>ES: arriveAtScene()
+    ES->>DB: UPDATE emergency_alerts SET status='on_scene'
+    ES->>NS: notifyHospital('patient_pickup')
+    ES->>AUDIT: logEvent('ambulance_arrived')
+
+    %% Billing Flow
+    Note over P, AUDIT: Billing and Payment
+    Note over AS: After appointment completion
+    AS->>QUEUE: publish appointmentCompleted
+    QUEUE->>BS: consume appointmentCompleted
+    BS->>BS: generateBill(appointmentId)
+    BS->>DB: INSERT INTO bills
+    BS->>DB: INSERT INTO bill_items
+    BS->>QUEUE: publish billGenerated
+    BS->>AUDIT: logCreation(userId, 'bill')
+    
+    QUEUE->>NS: consume billGenerated
+    NS->>P: Email bill notification
+    
+    P->>PW: View and pay bill
+    PW->>AG: GET /api/bills/{patientId}
+    AG->>BS: getPatientBills(patientId)
+    BS->>DB: SELECT bills WHERE patient_id=?
+    BS-->>AG: bill list
+    AG-->>PW: bills
+    
+    P->>PW: Make payment
+    PW->>AG: POST /api/payments {billId, amount, method}
+    AG->>BS: processPayment(billId, amount, method)
+    BS->>BS: validatePayment()
+    BS->>DB: INSERT INTO payments
+    BS->>DB: UPDATE bills SET paid_amount=?
+    BS->>QUEUE: publish paymentProcessed
+    BS->>AUDIT: logPayment(patientId, amount)
+    BS-->>AG: payment success
+    AG-->>PW: payment confirmation
+    
+    QUEUE->>NS: consume paymentProcessed
+    NS->>P: Payment receipt email
+
+    %% System Maintenance and Monitoring
+    Note over AUDIT: Continuous Audit Logging
+    loop Every User Action
+        AUDIT->>DB: INSERT INTO audit_logs
+        AUDIT->>CACHE: update user activity
+    end
+    
+    Note over CACHE: Cache Management
+    loop Every 5 minutes
+        CACHE->>CACHE: cleanup expired sessions
+        CACHE->>DB: sync critical data
+    end
+    
+    Note over QUEUE: Message Queue Processing
+    loop Continuous
+        QUEUE->>QUEUE: process pending messages
+        QUEUE->>QUEUE: handle failed messages
+        QUEUE->>QUEUE: update message status
+    end
