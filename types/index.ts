@@ -500,7 +500,7 @@ export interface Bill {
   totalAmount: number;
   paidAmount: number;
   balanceAmount: number;
-  status: 'draft' | 'sent' | 'partial' | 'paid' | 'overdue' | 'cancelled';
+  status: 'draft' | 'sent' | 'partial' | 'paid' | 'overdue' | 'cancelled' | 'pending';
   issueDate: Date;
   dueDate: Date;
   payments: Payment[];
