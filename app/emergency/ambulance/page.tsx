@@ -545,7 +545,7 @@ export default function AmbulanceTrackingPage() {
                       <CardTitle className="flex items-center justify-between">
                         <span>{selectedAmbulance.vehicleNumber} Details</span>
                         <Button variant="outline" size="sm" onClick={() => setSelectedAmbulance(null)}>
-                          <X className="w-4 h-4" />
+                          <span className="w-4 h-4">X</span> 
                         </Button>
                       </CardTitle>
                     </CardHeader>
